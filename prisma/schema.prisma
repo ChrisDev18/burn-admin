@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Day {
+  SUN
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+}
+
+model Podcast {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String?
+  hosts       String?
+  photo       String?
+  term        String
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  likes     Int
+}
+
+model RadioShow {
+  id              Int             @id @default(autoincrement())
+  title           String
+  description     String?
+  hosts           String?
+  photo           String?
+  recordings      Recording[]
+  scheduleEntries ScheduleEntry[]
+  defaultSettings Settings[]      @relation("DefaultShow")
+  offAirSettings  Settings[]      @relation("OffAirShow")
+}
+
+model Recording {
+  id          Int      @id @default(autoincrement())
+  radioShowId Int
+  recording   String
+  title       String?
+  recordedAt  DateTime
+
+  radioShow RadioShow @relation(fields: [radioShowId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Schedule {
+  id        Int             @id @default(autoincrement())
+  name      String
+  startDate DateTime?
+  endDate   DateTime?
+  entries   ScheduleEntry[]
+}
+
+model ScheduleEntry {
+  id          Int    @id @default(autoincrement())
+  scheduleId  Int
+  radioShowId Int
+  day         Day
+  startTime   String
+  endTime     String
+
+  schedule  Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  radioShow RadioShow @relation(fields: [radioShowId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Settings {
+  id            Int  @id @default(autoincrement())
+  defaultShowId Int?
+  offAirShowId  Int?
+
+  defaultShow RadioShow? @relation("DefaultShow", fields: [defaultShowId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  offAirShow  RadioShow? @relation("OffAirShow", fields: [offAirShowId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+}

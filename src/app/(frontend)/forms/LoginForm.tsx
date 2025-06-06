@@ -1,97 +1,47 @@
-'use client'
+'use client';
 
-import {useReducer, useState} from 'react'
-import {Button, Callout, Flex, Heading, IconButton, Text, TextField} from "@radix-ui/themes";
-import {EyeClosedIcon, EyeOpenIcon} from "@radix-ui/react-icons";
-import Form from "next/form";
-import {LoginResponse, LoginSchema} from "@/app/lib/types/auth";
-import {z} from "zod";
+import { useReducer, useState } from 'react';
+import {
+  Button,
+  Callout,
+  Flex,
+  Heading,
+  IconButton,
+  Text,
+  TextField,
+} from '@radix-ui/themes';
+import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
+import Form from 'next/form';
+import { createFormReducer } from '@/app/lib/logic/FormReducerFactory';
+import { LoginSchema } from '@/app/lib/types/auth';
+import { useRouter } from 'next/navigation';
+import {loginAction} from "@/app/api/auth/login/loginAction";
 
-type LoginFormValues = z.infer<typeof LoginSchema>;
-type LoginFormErrors = Partial<Record<keyof LoginFormValues, string[]>>;
-
-
-type FormState = {
-  values: LoginFormValues;
-  errors: LoginFormErrors;
-  message: string | null;
-};
-
-type Action =
-    | { type: 'CHANGE'; field: keyof LoginFormValues; value: string }
-    | { type: 'VALIDATE' }
-    | { type: 'SET_ERRORS'; errors: LoginFormErrors }
-    | { type: 'SET_MESSAGE'; message: string | null }
-    | { type: 'RESET' };
-
-const initialState: FormState = {
-  values: { email: '', password: '' },
-  errors: {},
-  message: null
-};
-
-function formReducer(state: FormState, action: Action): FormState {
-  switch (action.type) {
-    case 'CHANGE': {
-      const newValues = { ...state.values, [action.field]: action.value };
-      // const result = LoginSchema.safeParse(newValues);
-      // const errors = result.success ? {} : result.error.flatten().fieldErrors;
-      return { ...state, values: newValues };
-    }
-    case 'VALIDATE': {
-      const result = LoginSchema.safeParse(state.values);
-      const errors = result.success ? {} : result.error.flatten().fieldErrors;
-      return { ...state, errors };
-    }
-    case 'SET_ERRORS':
-      return { ...state, errors: action.errors };
-    case 'SET_MESSAGE':
-      return { ...state, message: action.message };
-    case 'RESET':
-      return initialState;
-    default:
-      return state;
-  }
-}
+const { reducer, initialState } = createFormReducer(LoginSchema, {
+  email: '',
+  password: '',
+});
 
 export default function LoginForm() {
-  const [pending, setPending] = useState(false)
-  const [state, dispatch] = useReducer(formReducer, initialState);
+  const [pending, setPending] = useState(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const [visible, setVisible] = useState(false);
 
   const handleSubmit = async () => {
     setPending(true);
-    // dispatch({ type: 'VALIDATE' });
 
-    const result = LoginSchema.safeParse(state.values);
-    if (!result.success) {
-      dispatch({ type: 'SET_ERRORS', errors: result.error.flatten().fieldErrors });
-      setPending(false);
-      return;
-    }
+    dispatch({ type: 'SET_ERRORS', errors: {} });
 
-    try {
-      const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(state.values)
-      });
+    const result = await loginAction(state.values);
 
-      const data: LoginResponse = await res.json();
-
-      if (!res.ok || !data.success) {
-        if ("errors" in data) {
-          dispatch({ type: 'SET_ERRORS', errors: data.errors });
-        } else {
-          dispatch({ type: 'SET_MESSAGE', message: data.message });
-        }
+    if (result.success) {
+      dispatch({ type: 'SET_MESSAGE', message: result.message });
+    } else {
+      if ('errors' in result) {
+        dispatch({ type: 'SET_ERRORS', errors: result.errors });
       } else {
-        dispatch({ type: 'SET_MESSAGE', message: data.message });
+        dispatch({ type: 'SET_MESSAGE', message: result.message });
       }
-    } catch (err) {
-      console.error("Network error:", err);
     }
 
     setPending(false);
@@ -113,7 +63,11 @@ export default function LoginForm() {
                 placeholder="e.g. abc123@student.bham.ac.uk"
                 value={state.values.email}
                 onChange={(e) =>
-                    dispatch({ type: 'CHANGE', field: 'email', value: e.target.value })
+                    dispatch({
+                      type: 'CHANGE',
+                      field: 'email',
+                      value: e.target.value,
+                    })
                 }
             />
             {state.errors.email && (
@@ -135,7 +89,11 @@ export default function LoginForm() {
                 type={visible ? 'text' : 'password'}
                 value={state.values.password}
                 onChange={(e) =>
-                    dispatch({ type: 'CHANGE', field: 'password', value: e.target.value })
+                    dispatch({
+                      type: 'CHANGE',
+                      field: 'password',
+                      value: e.target.value,
+                    })
                 }
             >
               <TextField.Slot side="right">
@@ -168,5 +126,5 @@ export default function LoginForm() {
           </Button>
         </Form>
       </Flex>
-  )
+  );
 }

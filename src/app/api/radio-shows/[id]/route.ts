@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import {deleteRadioShow, getRadioShowById, updateRadioShow} from "@/lib/repositories/RadioShowRepository";
-import {radioShowSchema} from "@/lib/types/RadioShow";
+import {deleteRadioShow, getRadioShowById, updateRadioShow} from "@/app/lib/repositories/RadioShowRepository";
+import {radioShowSchema} from "@/app/lib/types/RadioShow";
 
 
 // GET /api/radio-shows/[id]

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-import {createRadioShow} from "@/lib/repositories/RadioShowRepository";
-import {radioShowSchema} from "@/lib/types/RadioShow";
+import prisma from '@/app/lib/prisma'
+import {createRadioShow} from "@/app/lib/repositories/RadioShowRepository";
+import {radioShowSchema} from "@/app/lib/types/RadioShow";
 
 // GET /api/radio-shows
 export async function GET() {

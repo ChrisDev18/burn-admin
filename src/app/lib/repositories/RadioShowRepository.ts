@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
-import {Prisma} from "../../../generated/prisma";
+import prisma from "@/app/lib/prisma";
+import {Prisma} from "@/../generated/prisma";
 
 export async function createRadioShow(radioShow: Prisma.RadioShowCreateInput) {
   return prisma.radioShow.create({

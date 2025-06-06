@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "@radix-ui/themes/styles.css";
+// import "./globals.css";
+import {Flex, Theme} from "@radix-ui/themes";
+import {ThemeProvider} from "next-themes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,8 +27,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+      <body style={{all: "unset"}} className={`${geistSans.variable} ${geistMono.variable}`}>
+        <ThemeProvider attribute="class">
+          <Theme accentColor="purple" grayColor="auto">
+            <Flex direction="column" minHeight="100vh">
+              {children}
+            </Flex>
+          </Theme>
+        </ThemeProvider>
       </body>
     </html>
   );

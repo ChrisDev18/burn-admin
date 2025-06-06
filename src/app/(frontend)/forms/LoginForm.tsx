@@ -1,7 +1,7 @@
 'use client'
 
 import {useReducer, useState} from 'react'
-import {Button, Flex, Heading, IconButton, Text, TextField} from "@radix-ui/themes";
+import {Button, Callout, Flex, Heading, IconButton, Text, TextField} from "@radix-ui/themes";
 import {EyeClosedIcon, EyeOpenIcon} from "@radix-ui/react-icons";
 import Form from "next/form";
 import {LoginResponse, LoginSchema} from "@/app/lib/types/auth";
@@ -14,17 +14,20 @@ type LoginFormErrors = Partial<Record<keyof LoginFormValues, string[]>>;
 type FormState = {
   values: LoginFormValues;
   errors: LoginFormErrors;
+  message: string | null;
 };
 
 type Action =
     | { type: 'CHANGE'; field: keyof LoginFormValues; value: string }
     | { type: 'VALIDATE' }
     | { type: 'SET_ERRORS'; errors: LoginFormErrors }
+    | { type: 'SET_MESSAGE'; message: string | null }
     | { type: 'RESET' };
 
 const initialState: FormState = {
   values: { email: '', password: '' },
   errors: {},
+  message: null
 };
 
 function formReducer(state: FormState, action: Action): FormState {
@@ -42,6 +45,8 @@ function formReducer(state: FormState, action: Action): FormState {
     }
     case 'SET_ERRORS':
       return { ...state, errors: action.errors };
+    case 'SET_MESSAGE':
+      return { ...state, message: action.message };
     case 'RESET':
       return initialState;
     default:
@@ -56,7 +61,7 @@ export default function LoginForm() {
 
   const handleSubmit = async () => {
     setPending(true);
-    dispatch({ type: 'VALIDATE' });
+    // dispatch({ type: 'VALIDATE' });
 
     const result = LoginSchema.safeParse(state.values);
     if (!result.success) {
@@ -80,10 +85,10 @@ export default function LoginForm() {
         if ("errors" in data) {
           dispatch({ type: 'SET_ERRORS', errors: data.errors });
         } else {
-          console.log("Login error:", data.message);
+          dispatch({ type: 'SET_MESSAGE', message: data.message });
         }
       } else {
-        console.log("Login successful:", data.message);
+        dispatch({ type: 'SET_MESSAGE', message: data.message });
       }
     } catch (err) {
       console.error("Network error:", err);
@@ -151,6 +156,12 @@ export default function LoginForm() {
                 </Text>
             )}
           </Flex>
+
+          {state.message && (
+              <Callout.Root color="blue">
+                <Callout.Text>{state.message}</Callout.Text>
+              </Callout.Root>
+          )}
 
           <Button loading={pending} type="submit" mt="4">
             Log in

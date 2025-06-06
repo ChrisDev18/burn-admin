@@ -10,7 +10,7 @@ import {
   Text,
   TextField
 } from '@radix-ui/themes';
-import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
+import {EyeClosedIcon, EyeOpenIcon, InfoCircledIcon} from '@radix-ui/react-icons';
 import { createFormReducer } from '@/app/lib/logic/FormReducerFactory';
 import Form from 'next/form';
 import { NewUserResponse, NewUserSchema } from '@/app/lib/types/user';
@@ -199,6 +199,7 @@ export default function CreateUserForm() {
 
           {state.message && (
               <Callout.Root>
+                <Callout.Icon><InfoCircledIcon /></Callout.Icon>
                 <Callout.Text>{state.message}</Callout.Text>
               </Callout.Root>
           )}

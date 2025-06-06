@@ -27,7 +27,7 @@ export const createFormReducer = <T>(schema: z.ZodSchema<T>, initialValues: T) =
         const newValues = { ...state.values, [action.field]: action.value };
         // const result = LoginSchema.safeParse(newValues);
         // const errors = result.success ? {} : result.error.flatten().fieldErrors;
-        return { ...state, values: newValues };
+        return { ...state, values: newValues, errors: {...state.errors, [action.field]: null} };
       }
       case 'VALIDATE': {
         const result = schema.safeParse(state.values);

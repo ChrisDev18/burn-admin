@@ -47,7 +47,7 @@ export default async function RootLayout({
   // }
 
   return (
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
       <body style={{all: "unset"}} className={`${geistSans.variable} ${geistMono.variable}`}>
       <ThemeProvider attribute="class">
         <Theme accentColor="purple" grayColor="auto">

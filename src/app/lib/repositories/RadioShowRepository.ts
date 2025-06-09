@@ -1,5 +1,6 @@
 import prisma from "@/app/lib/prisma";
-import {Prisma} from "@/../generated/prisma";
+import { Prisma } from "@prisma/client";
+import {FrontendRadioShow} from "@/app/lib/types/RadioShow";
 
 export async function createRadioShow(radioShow: Prisma.RadioShowCreateInput) {
   return prisma.radioShow.create({
@@ -12,10 +13,32 @@ export async function createRadioShow(radioShow: Prisma.RadioShowCreateInput) {
   });
 }
 
-export async function getRadioShowById(id: number) {
-  return prisma.radioShow.findUnique({
-    where: { id: id },
+export async function getAllRadioShows(): Promise<FrontendRadioShow[]> {
+  const shows = await prisma.radioShow.findMany();
+
+  return shows.map(show => {
+    const hosts = show.hosts?.split(",") || [];
+
+    return {
+      ...show,
+      hosts,
+    };
   });
+}
+
+export async function getRadioShowById(id: number): Promise<FrontendRadioShow | null> {
+  const show = await prisma.radioShow.findUnique({
+    where: { id },
+  });
+
+  if (!show) return null;
+
+  const hosts = show.hosts?.split(",") || [];
+
+  return {
+    ...show,
+    hosts,
+  };
 }
 
 export async function updateRadioShow(newRadioShow: Prisma.RadioShowUpdateInput, id: number) {

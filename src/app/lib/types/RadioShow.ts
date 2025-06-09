@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {RadioShow} from "@prisma/client";
 
 export const radioShowSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -7,9 +8,6 @@ export const radioShowSchema = z.object({
   photo: z.string().url().optional(),
 });
 
-export type IRadioShow = {
-  title: string,
-  description: string | null,
-  hosts: string | null,
-  photo: string | null,
-}
+export type FrontendRadioShow = Omit<RadioShow, 'hosts'> & {
+  hosts: string[]
+};

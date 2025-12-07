@@ -15,8 +15,11 @@ export default function RootNavbar({session}: {session: SessionPayload | undefin
         <TabNav.Link asChild active={pathname === "/"}>
           <Link href="/">Home</Link>
         </TabNav.Link>
-        <TabNav.Link asChild active={pathname === "/radio-shows"}>
+        <TabNav.Link asChild active={pathname.startsWith("/radio-shows")}>
           <Link href="/radio-shows">Radio Shows</Link>
+        </TabNav.Link>
+        <TabNav.Link asChild active={pathname.startsWith("/scheduling")}>
+          <Link href="/scheduling">Scheduling</Link>
         </TabNav.Link>
         <TabNav.Link asChild>
           <button onClick={logoutAction}>Log out</button>

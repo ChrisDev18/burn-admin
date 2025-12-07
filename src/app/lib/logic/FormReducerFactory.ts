@@ -1,7 +1,6 @@
-import {z} from "zod";
+import { z } from "zod";
 
 export const createFormReducer = <T>(schema: z.ZodSchema<T>, initialValues: T) => {
-
   type FormState = {
     values: T;
     errors: Partial<Record<keyof T, string[]>>;
@@ -11,11 +10,11 @@ export const createFormReducer = <T>(schema: z.ZodSchema<T>, initialValues: T) =
   const initialState: FormState = {
     values: initialValues,
     errors: {},
-    message: null
+    message: null,
   };
 
   type Action =
-      | { type: 'CHANGE'; field: keyof T; value: string }
+      | { type: 'CHANGE'; field: keyof T; value: T[keyof T] }
       | { type: 'VALIDATE' }
       | { type: 'SET_ERRORS'; errors: Partial<Record<keyof T, string[]>> }
       | { type: 'SET_MESSAGE'; message: string | null }
@@ -25,9 +24,11 @@ export const createFormReducer = <T>(schema: z.ZodSchema<T>, initialValues: T) =
     switch (action.type) {
       case 'CHANGE': {
         const newValues = { ...state.values, [action.field]: action.value };
-        // const result = LoginSchema.safeParse(newValues);
-        // const errors = result.success ? {} : result.error.flatten().fieldErrors;
-        return { ...state, values: newValues, errors: {...state.errors, [action.field]: null} };
+        return {
+          ...state,
+          values: newValues,
+          errors: { ...state.errors, [action.field]: undefined },
+        };
       }
       case 'VALIDATE': {
         const result = schema.safeParse(state.values);
@@ -43,7 +44,7 @@ export const createFormReducer = <T>(schema: z.ZodSchema<T>, initialValues: T) =
       default:
         return state;
     }
-  }
+  };
 
-  return {reducer, initialState};
-}
+  return { reducer, initialState };
+};

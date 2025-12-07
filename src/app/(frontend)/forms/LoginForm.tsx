@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useState } from 'react';
+import {FormEventHandler, useReducer, useState} from 'react';
 import {
   Box,
   Button,
@@ -14,7 +14,6 @@ import {
   TextField,
 } from '@radix-ui/themes';
 import {EyeClosedIcon, EyeOpenIcon, InfoCircledIcon} from '@radix-ui/react-icons';
-import Form from 'next/form';
 import { createFormReducer } from '@/app/lib/logic/FormReducerFactory';
 import { LoginSchema } from '@/app/lib/types/auth';
 import {loginAction} from "@/app/api/auth/login/loginAction";
@@ -29,7 +28,9 @@ export default function LoginForm() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [visible, setVisible] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault();
+
     setPending(true);
 
     dispatch({ type: 'SET_ERRORS', errors: {} });
@@ -52,7 +53,7 @@ export default function LoginForm() {
   return (
       <Card asChild>
         <Box width="100%" maxWidth="440px" >
-          <Form action={handleSubmit}>
+          <form onSubmit={handleSubmit}>
             <Flex direction="column" gap="4" p="2">
               <Heading align="center" mt="4">Log in</Heading>
 
@@ -173,7 +174,7 @@ export default function LoginForm() {
                 </Popover.Content>
               </Popover.Root>
             </Flex>
-          </Form>
+          </form>
         </Box>
       </Card>
 

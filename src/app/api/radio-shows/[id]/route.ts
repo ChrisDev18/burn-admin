@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import {deleteRadioShow, getRadioShowById, updateRadioShow} from "@/app/lib/repositories/RadioShowRepository";
-import {radioShowSchema} from "@/app/lib/types/RadioShow";
+import {RadioShowSchema} from "@/app/lib/types/RadioShow";
 
 
 // GET /api/radio-shows/[id]
@@ -35,7 +35,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ message: 'No valid JSON body provided' }, { status: 400 });
   }
 
-  if (! radioShowSchema.safeParse(body).success)
+  if (! RadioShowSchema.safeParse(body).success)
     return NextResponse.json({ message: "Incorrect request body format" }, { status: 400 });
 
   const response = await updateRadioShow(body, id_n);

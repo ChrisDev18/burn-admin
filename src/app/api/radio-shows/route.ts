@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/app/lib/prisma'
-import {createRadioShow} from "@/app/lib/repositories/RadioShowRepository";
-import {radioShowSchema} from "@/app/lib/types/RadioShow";
+import {createRadioShowWithoutPhoto} from "@/app/lib/repositories/RadioShowRepository";
+import {RadioShowSchema} from "@/app/lib/types/RadioShow";
 
 // GET /api/radio-shows
 export async function GET() {
@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     // If an error occurs during parsing, it means the body is either missing or invalid
     return NextResponse.json({ message: 'No valid JSON body provided' }, { status: 400 });
   }
-  if (! radioShowSchema.safeParse(body).success)
+  if (! RadioShowSchema.safeParse(body).success)
     return NextResponse.json({ message: "Incorrect request body format" }, { status: 400 });
-  const show = await createRadioShow(body);
+  const show = await createRadioShowWithoutPhoto(body);
   return NextResponse.json(show, { status: 201 });
 }

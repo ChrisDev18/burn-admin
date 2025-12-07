@@ -58,25 +58,38 @@ model Recording {
 model Schedule {
   id        Int             @id @default(autoincrement())
   name      String
-  startDate DateTime?
-  endDate   DateTime?
+  startDate DateTime
+  endDate   DateTime
   entries   ScheduleEntry[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 }
 
 model ScheduleEntry {
-  id          Int      @id @default(autoincrement())
-  scheduleId  Int
-  radioShowId Int
-  day         Day
-  startTime   String
-  endTime     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int                    @id @default(autoincrement())
+  scheduleId    Int
+  radioShowId   Int
+  day           Day
+  startTime     String
+  endTime       String
+  activeFrom    DateTime?
+  activeUntil   DateTime?
+  overriding    Boolean // Whether this entry is a one-off and should override any regular event
+  cancellations ScheduleCancellation[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 
   schedule  Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   radioShow RadioShow @relation(fields: [radioShowId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model ScheduleCancellation {
+  id              Int      @id @default(autoincrement())
+  scheduleEntryId Int
+  weekDate        DateTime // A date occuring in the week that this cancellation occurs
+  // By default, this would be the date that this show would occur in the week
+
+  scheduleEntry ScheduleEntry? @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 enum Day {
@@ -100,15 +113,4 @@ model Podcast {
   term        String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-// Posts
-
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
-  likes     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }

@@ -8,12 +8,13 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { CalendarEvent } from "@/app/lib/calendar/models";
-import { applyTime, dayToJs, jsToDay, toTimeString } from "@/app/lib/calendar/utils";
+import { jsToDay } from "@/app/lib/calendar/utils";
 import { Flex, Slider, Text, TextField } from "@radix-ui/themes";
 import "@/app/(frontend)/styling/calendarStyles.css";
 import { calendarReducer } from "@/app/(frontend)/components/CalendarEditor/CalendarReducer";
 import {EntryDialog} from "@/app/(frontend)/components/CalendarEditor/ScheduleEntryEditDialog";
-import {ScheduleEntry} from "@/modules/domain/model/ScheduleEntry";
+import {ScheduleEntry, Time, toCalendarEvents} from "@/app/(frontend)/components/CalendarEditor/utils";
+import {Day} from "@prisma/client";
 
 // Localizer for dates
 const locales = { "en-US": enUS };
@@ -22,6 +23,7 @@ const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales
 const DnDCalendar = withDragAndDrop(Calendar);
 
 type Props = {
+  scheduleId: number | null
   entries: ScheduleEntry[];
   setEntries: (entries: ScheduleEntry[]) => void;
   shows: { id: number; title: string }[];
@@ -29,7 +31,7 @@ type Props = {
   scheduleEnd: Date;
 };
 
-export default function ScheduleCalendar({ entries, setEntries, shows, scheduleStart, scheduleEnd }: Props) {
+export default function ScheduleCalendar({ scheduleId, entries, setEntries, shows, scheduleStart, scheduleEnd }: Props) {
   const [state, dispatch] = useReducer(calendarReducer, {
     isDialogOpen: false,
     mode: "create",
@@ -44,23 +46,9 @@ export default function ScheduleCalendar({ entries, setEntries, shows, scheduleS
     document.documentElement.style.setProperty('--time-slot-min-height', `${state.timeSlotHeight}px`);
   }, [state.timeSlotHeight]);
 
+  // Map model data to RBC UI data
   const events: CalendarEvent[] = useMemo(() => {
-    return entries.map(entry => {
-      const base = new Date();
-      const eventDate = new Date(base);
-      eventDate.setDate(base.getDate() - base.getDay() + dayToJs[entry.day]);
-      const start = applyTime(eventDate, entry.startTime);
-      const end = applyTime(eventDate, entry.endTime);
-      const show = shows.find(s => s.id === entry.radioShowId);
-
-      return {
-        id: `entry-${entry.id}`,
-        title: show?.title ?? "N/A",
-        start,
-        end,
-        resource: { type: "entry", entryId: entry.id, scheduleId: entry.scheduleId },
-      };
-    });
+    return entries.flatMap(entry => toCalendarEvents(entry, shows, scheduleStart, scheduleEnd))
   }, [entries, shows]);
 
   const hiddenEvents = useMemo(() => {
@@ -71,42 +59,76 @@ export default function ScheduleCalendar({ entries, setEntries, shows, scheduleS
   function timeStringToHour(value: string) { return parseInt(value.split(":")[0], 10); }
 
   function handleSelectEvent(event: any) {
-    dispatch({ type: "OPEN_EDIT", event });
+    console.log(event)
+    // recover schedule event from calendar event
+    const recoveredEvent = entries.find(entry => entry.key === event.key);
+
+    if (!recoveredEvent) {
+      console.error("Could not recover the abstract event from the calendar entry");
+      return;
+    }
+
+    dispatch({ type: "OPEN_EDIT", event: recoveredEvent});
   }
 
   function handleSelectSlot(slotInfo: { start: Date; end: Date }) {
-    dispatch({ type: "OPEN_CREATE", range: { start: slotInfo.start, end: slotInfo.end } });
+    dispatch({
+      type: "OPEN_CREATE",
+      initialEvent: {
+        id: null,
+        key: Math.max(...entries.map(entry => entry.key)),
+        scheduleId: scheduleId,
+        radioShowId: undefined,
+        day: jsToDay[slotInfo.start.getDay()],
+        startTime: {minutes: slotInfo.start.getMinutes(), hours: slotInfo.start.getHours()},
+        endTime: {minutes: slotInfo.end.getMinutes(), hours: slotInfo.end.getHours()}
+      },
+      range: { start: slotInfo.start, end: slotInfo.end }
+    });
   }
 
-  function handleEventDrop({ event, start, end }: any) {
-    if (event.resource?.type !== "entry") return;
-    const entryId = event.resource.entryId;
-    setEntries(entries.map(entry => entry.id === entryId ? { ...entry, day: jsToDay[start.getDay()], startTime: toTimeString(start), endTime: toTimeString(end) } : entry));
+  function handleEventDrop({ event, start, end }: { event: CalendarEvent, start: Date; end: Date }) {
+    const key = event.entryKey;
+    setEntries(
+        entries.map(entry =>
+            entry.key === key ? {
+              ...entry,
+              day: jsToDay[start.getDay()],
+              startTime: {minutes: start.getMinutes(), hours: start.getHours()},
+              endTime: {minutes: end.getMinutes(), hours: end.getHours()}
+            } : entry
+        )
+    );
   }
 
-  function handleEventResize({ event, start, end }: any) {
+  function handleEventResize({ event, start, end }: { event: CalendarEvent, start: Date; end: Date }) {
     handleEventDrop({ event, start, end });
   }
 
-  function handleSave(formData: Partial<ScheduleEntry>) {
-    if (state.mode === "edit" && state.selectedEvent?.resource?.type === "entry") {
-      const entryId = state.selectedEvent.resource.entryId;
-      setEntries(entries.map(entry => entry.id === entryId ? { ...entry, ...formData } : entry));
+  function handleSave(formData: {
+    radioShowId: number
+    day: Day
+    startTime: Time
+    endTime: Time
+  }) {
+    // If editing an existing entry, update entry in state with new details
+    if (state.mode === "edit" && state.selectedEvent) {
+      const entryId = state.selectedEvent.id;
+      setEntries(entries.map(entry =>
+          entry.id === entryId ? { ...entry, ...formData } : entry
+      ));
     }
 
+    // If creating a new entry, update entry in state with new details
     if (state.mode === "create" && state.selectedRange) {
       const newEntry: ScheduleEntry = {
-        id: Math.max(0, ...entries.map(e => e.id)) + 1,
-        scheduleId: 0,
-        radioShowId: formData.radioShowId ?? shows[0].id,
-        day: jsToDay[state.selectedRange.start.getDay()],
-        startTime: toTimeString(state.selectedRange.start),
-        endTime: toTimeString(state.selectedRange.end),
-        activeFrom: formData.activeFrom ?? null,
-        activeUntil: formData.activeUntil ?? null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        exceptions: [],
+        id: null,
+        key: Math.max(...entries.map(entry => entry.key)),
+        scheduleId: scheduleId,
+        radioShowId: formData.radioShowId,
+        day: formData.day,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
       };
       setEntries([...entries, newEntry]);
     }
@@ -181,11 +203,7 @@ export default function ScheduleCalendar({ entries, setEntries, shows, scheduleS
               shows={shows}
               scheduleStart={scheduleStart}
               scheduleEnd={scheduleEnd}
-              initialValues={
-                state.mode === "edit" && state.selectedEvent?.resource?.type === "entry"
-                    ? entries.find(e => e.id === state.selectedEvent!.resource!.entryId)
-                    : undefined
-              }
+              initialValues={state.selectedEvent}
               onClose={() => dispatch({ type: "CLOSE_DIALOG" })}
               onSave={handleSave}
           />

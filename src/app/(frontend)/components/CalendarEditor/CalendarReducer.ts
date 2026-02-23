@@ -1,11 +1,11 @@
-import {CalendarEvent} from "@/app/lib/calendar/models";
+import {InitialScheduleEntry, ScheduleEntry} from "@/app/(frontend)/components/CalendarEditor/utils";
 
 type CalendarMode = "create" | "edit"
 
 interface CalendarState {
   isDialogOpen: boolean
   mode: CalendarMode
-  selectedEvent: CalendarEvent | null
+  selectedEvent: InitialScheduleEntry | null
   selectedRange: { start: Date; end: Date } | null
   timeSlotHeight: number
   minHour: number
@@ -13,8 +13,8 @@ interface CalendarState {
 }
 
 type CalendarAction =
-    | { type: "OPEN_EDIT"; event: CalendarEvent }
-    | { type: "OPEN_CREATE"; range: { start: Date; end: Date } }
+    | { type: "OPEN_EDIT"; event: ScheduleEntry }
+    | { type: "OPEN_CREATE"; initialEvent: InitialScheduleEntry, range: { start: Date; end: Date } }
     | { type: "CLOSE_DIALOG" }
     | { type: "SET_TIME_SLOT_HEIGHT"; value: number }
     | { type: "SET_MIN_HOUR"; value: number }
@@ -25,7 +25,7 @@ export function calendarReducer(state: CalendarState, action: CalendarAction): C
     case "OPEN_EDIT":
       return { ...state, isDialogOpen: true, mode: "edit", selectedEvent: action.event, selectedRange: null }
     case "OPEN_CREATE":
-      return { ...state, isDialogOpen: true, mode: "create", selectedEvent: null, selectedRange: action.range }
+      return { ...state, isDialogOpen: true, mode: "create", selectedEvent: action.initialEvent, selectedRange: action.range }
     case "CLOSE_DIALOG":
       return { ...state, isDialogOpen: false, selectedEvent: null, selectedRange: null }
     case "SET_TIME_SLOT_HEIGHT":

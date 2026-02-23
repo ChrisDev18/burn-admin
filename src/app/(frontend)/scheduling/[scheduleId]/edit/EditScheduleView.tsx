@@ -15,7 +15,7 @@ import PageHero from "@/app/(frontend)/components/PageHero";
 import ScheduleCalendar from "@/app/(frontend)/components/CalendarEditor/CalendarEditor";
 import {RadioShow} from "@/modules/domain/model/RadioShow";
 import {ScheduleWithEntries} from "@/modules/domain/model/Schedule";
-import {ScheduleEntry} from "@/modules/domain/model/ScheduleEntry";
+import {ScheduleEntry, toTime} from "@/app/(frontend)/components/CalendarEditor/utils";
 
 
 export default function EditScheduleView({ originalSchedule, shows }: {
@@ -24,8 +24,30 @@ export default function EditScheduleView({ originalSchedule, shows }: {
 }) {
   const [state, dispatch] = useReducer(editScheduleReducer, {
     loading: false,
-    schedule: originalSchedule,
-    originalSchedule: originalSchedule,
+    schedule: {
+      ...originalSchedule,
+      entries: originalSchedule.entries.map((entry, i) => ({
+        id: entry.id,
+        key: i,
+        scheduleId: entry.scheduleId,
+        radioShowId: entry.radioShowId,
+        day: entry.day,
+        startTime: toTime(entry.startTime),
+        endTime: toTime(entry.endTime)
+      }))
+    },
+    originalSchedule: {
+      ...originalSchedule,
+      entries: originalSchedule.entries.map((entry, i) => ({
+        id: entry.id,
+        key: i,
+        scheduleId: entry.scheduleId,
+        radioShowId: entry.radioShowId,
+        day: entry.day,
+        startTime: toTime(entry.startTime),
+        endTime: toTime(entry.endTime)
+      }))
+    },
     error: null
   });
 
@@ -111,6 +133,7 @@ export default function EditScheduleView({ originalSchedule, shows }: {
               </Flex>
 
               <ScheduleCalendar
+                  scheduleId={state.schedule.id}
                   entries={state.schedule.entries}
                   setEntries={(entries: ScheduleEntry[]) => dispatch({
                     type: "SET_ENTRIES",

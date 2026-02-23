@@ -1,10 +1,14 @@
-import {ScheduleWithEntries} from "@/modules/domain/model/Schedule";
-import {ScheduleEntry} from "@/modules/domain/model/ScheduleEntry";
+import {Schedule, ScheduleWithEntries} from "@/modules/domain/model/Schedule";
+import {ScheduleEntry} from "@/app/(frontend)/components/CalendarEditor/utils";
 
 export interface EditScheduleState {
   loading: boolean;
-  schedule: ScheduleWithEntries;
-  originalSchedule: ScheduleWithEntries;
+  schedule: Schedule & {
+    entries: ScheduleEntry[]
+  };
+  originalSchedule: Schedule & {
+    entries: ScheduleEntry[]
+  };
   error: { status: "SAVE_FAILURE", message: string } | null;
 }
 
